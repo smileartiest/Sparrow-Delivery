@@ -1,0 +1,2 @@
+rootProject.name='Atozdelivery'
+include ':app'

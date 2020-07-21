@@ -21,6 +21,8 @@ import com.smile.atozdelivery.R;
 import com.smile.atozdelivery.controller.Addresparameters;
 import com.smile.atozdelivery.controller.AppUtill;
 import com.smile.atozdelivery.controller.Control;
+import com.smile.atozdelivery.controller.DeliveryParameteres;
+import com.smile.atozdelivery.controller.TimeDate;
 import com.smile.atozdelivery.retrofit.ApiUtil;
 
 import retrofit2.Call;
@@ -33,7 +35,7 @@ public class Order_Hold extends RecyclerView.ViewHolder {
         super(itemView);
     }
 
-    public void setdetails(final Context c1 , final String uid1 , final String id1 , String am1 , String addid1 , String sts1 ){
+    public void setdetails(final Context c1 , final String uid1 , final String id1 , String addid1 , String sts1 ){
 
         TextView oid = itemView.findViewById(R.id.rorder_oid);
         TextView amount = itemView.findViewById(R.id.rorder_amount);
@@ -43,7 +45,7 @@ public class Order_Hold extends RecyclerView.ViewHolder {
         TextView viewmore = itemView.findViewById(R.id.rorder_viewmore);
 
         oid.setText(id1);
-        amount.setText(am1);
+        //amount.setText(am1);
 
         DatabaseReference df = FirebaseDatabase.getInstance().getReference("address").child(uid1).child(addid1);
         df.addValueEventListener(new ValueEventListener() {
@@ -69,8 +71,13 @@ public class Order_Hold extends RecyclerView.ViewHolder {
             @Override
             public void onClick(View v) {
                 sendpushnotify(c1 , uid1 ,"I am tacking your order. deliver with in 15 minits.click to trak live");
-                AppUtill.ORDERURl.child(id1).child("did").setValue(new Control(c1).getuid());
                 AppUtill.ORDERURl.child(id1).child("sts").setValue("pending");
+                AppUtill.ORDERURl.child(id1).child("did").setValue(new Control(c1).getuid());
+                AppUtill.BILLINGURl.child(id1).child("did").setValue(new Control(c1).getuid());
+                AppUtill.BILLINGURl.child(id1).child("sts").setValue("pending");
+                DatabaseReference DELIVERY = AppUtill.DELIVERYURl.child(id1);
+                DeliveryParameteres d = new DeliveryParameteres(id1,id1,new Control(c1).getcno(),new Control(c1).getname(),"pending",new TimeDate(c1).getdate(),"none");
+                DELIVERY.setValue(d);
             }
         });
 

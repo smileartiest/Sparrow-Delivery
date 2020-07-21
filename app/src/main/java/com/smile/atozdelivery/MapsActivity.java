@@ -9,6 +9,7 @@ import androidx.fragment.app.FragmentActivity;
 import android.Manifest;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -19,6 +20,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -26,6 +28,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.crowdfire.cfalertdialog.CFAlertDialog;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -40,11 +43,13 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 import com.smile.atozdelivery.controller.Addresparameters;
 import com.smile.atozdelivery.controller.AppUtill;
+import com.smile.atozdelivery.controller.BillingParameters;
 import com.smile.atozdelivery.controller.OrderParametrs;
 import com.smile.atozdelivery.controller.TimeDate;
 import com.smile.atozdelivery.retrofit.ApiUtil;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -118,7 +123,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     nodelist.setText(qntlist1.toString());
                     pricelist.setText(amlist1.toString());
 
-                    bamount.setText("Rs . " + o.getBam());
                     pmode.setText(o.getPmode());
                     if (o.getSts().equals("complete")) {
                         completebtn.setVisibility(View.GONE);
@@ -127,6 +131,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     getMapdetails(o.getUid(), o.getAddres());
                     getcustomerdetails(o.getUid());
 
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        AppUtill.BILLINGURl.child(getIntent().getStringExtra("id")).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(dataSnapshot.getValue()!=null){
+                    BillingParameters b = dataSnapshot.getValue(BillingParameters.class);
+                    bamount.setText(b.getTotal_amount());
                 }
             }
 
@@ -164,7 +183,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     Addresparameters a = dataSnapshot.getValue(Addresparameters.class);
                     phno = a.getCno();
                     LatLng userpoint = new LatLng(Double.parseDouble(a.getLat()), Double.parseDouble(a.getLang()));
-                    mMap.addMarker(new MarkerOptions().position(userpoint).title("USER").icon(bitmapDescriptorFromVector(getApplicationContext(), R.drawable.usloc_icon)));
+                    mMap.addMarker(new MarkerOptions().position(userpoint).title("USER").icon(bitmapDescriptorFromVector(getApplicationContext(), R.drawable.home_location_icon)));
                     mMap.setIndoorEnabled(true);
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userpoint, 15f));
 
@@ -203,32 +222,30 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         completebtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final Dialog d = new Dialog(MapsActivity.this);
-                d.setContentView(R.layout.dialog_complete);
-                d.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-                d.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-                ImageView img = d.findViewById(R.id.complete_dialog_image);
-                Button complete = d.findViewById(R.id.complete_dialog_cbtn);
-                ImageView close = d.findViewById(R.id.complete_dialog_close);
-
-                close.setImageResource(R.drawable.close_icon);
-                img.setImageResource(R.drawable.collectcash);
-
-                complete.setOnClickListener(new View.OnClickListener() {
+                CFAlertDialog.Builder builder = new CFAlertDialog.Builder(MapsActivity.this);
+                builder.setDialogStyle(CFAlertDialog.CFAlertStyle.ALERT);
+                builder.setContentImageDrawable(R.drawable.collectcash);
+                builder.setCornerRadius(20);
+                builder.setTextGravity(Gravity.CENTER);
+                builder.setTitle("Are you Collect Cash ?");
+                builder.addButton("complete", -1, -1, CFAlertDialog.CFAlertActionStyle.POSITIVE, CFAlertDialog.CFAlertActionAlignment.JUSTIFIED, new DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick(View v) {
-                        d.dismiss();
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        AppUtill.ORDERURl.child(getIntent().getStringExtra("id")).child("sts").setValue("complete");
+                        AppUtill.DELIVERYURl.child(getIntent().getStringExtra("id")).child("sts").setValue("complete");
+                        AppUtill.BILLINGURl.child(getIntent().getStringExtra("id")).child("sts").setValue("complete");
+                        AppUtill.DELIVERYURl.child(getIntent().getStringExtra("id")).child("dtime").setValue(new TimeDate(MapsActivity.this).gettime());
                         sendpushnotify(getApplicationContext() , phno , "Delivered your order. Thank your for your valuable order. Please give rating.");
                     }
                 });
-
-                close.setOnClickListener(new View.OnClickListener() {
+                builder.addButton("NOT NOW", -1, -1, CFAlertDialog.CFAlertActionStyle.DEFAULT, CFAlertDialog.CFAlertActionAlignment.JUSTIFIED, new DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick(View v) {
-                        d.dismiss();
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
                     }
                 });
-                d.show();
+                builder.show();
 
             }
         });
@@ -244,31 +261,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         checkcallPermission();
                     }
                 }else{
-                    opendialog("Oops !","Don't make a call");
+                    CFAlertDialog.Builder builder = new CFAlertDialog.Builder(MapsActivity.this);
+                    builder.setDialogStyle(CFAlertDialog.CFAlertStyle.ALERT);
+                    builder.setIcon(R.drawable.sparrowiconsmall);
+                    builder.setCornerRadius(20);
+                    builder.setTitle("Oops ! Don't make a call");
+                    builder.addButton("NOT NOW", -1, -1, CFAlertDialog.CFAlertActionStyle.DEFAULT, CFAlertDialog.CFAlertActionAlignment.JUSTIFIED, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+                    builder.show();
                 }
             }
         });
 
-    }
-
-    public void opendialog(String tit ,String messg){
-        final Dialog d = new Dialog(MapsActivity.this);
-        d.setContentView(R.layout.dialog_oops);
-        TextView message = d.findViewById(R.id.dopps_message);
-        TextView title = d.findViewById(R.id.dopps_title);
-        TextView okbtn = d.findViewById(R.id.dopps_okbtn);
-        title.setText(tit);
-        message.setText(messg);
-        okbtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                d.cancel();
-            }
-        });
-        d.setCanceledOnTouchOutside(false);
-        d.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-        d.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        d.show();
     }
 
     public boolean checkcallPermission() {
@@ -319,12 +327,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if(response.isSuccessful()){
                     Toast.makeText(c1, "Success", Toast.LENGTH_SHORT).show();
                     AppUtill.ORDERURl.child(getIntent().getStringExtra("id")).child("sts").setValue("complete");
-                    AppUtill.ORDERURl.child(getIntent().getStringExtra("id")).child("ddate").setValue(new TimeDate(MapsActivity.this).getdate());
+                    AppUtill.DELIVERYURl.child(getIntent().getStringExtra("id")).child("sts").setValue("complete");
+                    AppUtill.DELIVERYURl.child(getIntent().getStringExtra("id")).child("dtime").setValue(new TimeDate(MapsActivity.this).gettime());
                     finish();
                 }else{
                     Toast.makeText(c1, "Success", Toast.LENGTH_SHORT).show();
                     AppUtill.ORDERURl.child(getIntent().getStringExtra("id")).child("sts").setValue("complete");
-                    AppUtill.ORDERURl.child(getIntent().getStringExtra("id")).child("ddate").setValue(new TimeDate(MapsActivity.this).getdate());
+                    AppUtill.DELIVERYURl.child(getIntent().getStringExtra("id")).child("sts").setValue("complete");
+                    AppUtill.DELIVERYURl.child(getIntent().getStringExtra("id")).child("dtime").setValue(new TimeDate(MapsActivity.this).gettime());
                     finish();
                 }
             }

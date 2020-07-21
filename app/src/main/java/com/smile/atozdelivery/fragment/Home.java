@@ -27,7 +27,9 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.smile.atozdelivery.R;
 import com.smile.atozdelivery.controller.AppUtill;
+import com.smile.atozdelivery.controller.BillingParameters;
 import com.smile.atozdelivery.controller.Control;
+import com.smile.atozdelivery.controller.LocationClass;
 import com.smile.atozdelivery.controller.MyAccountParameters;
 import com.smile.atozdelivery.controller.TimeDate;
 
@@ -48,10 +50,7 @@ public class Home extends Fragment {
     Control c;
 
     private final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
-
-    private FusedLocationProviderClient fusedLocationProviderClient;
-    LocationManager lm;
-    Location currentloc;
+    LocationClass locationClass;
 
     public Home() {
     }
@@ -75,15 +74,7 @@ public class Home extends Fragment {
         logout = v.findViewById(R.id.macount_logout);
 
         c = new Control(getContext());
-
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getContext());
-        lm = (LocationManager)getContext().getSystemService(Context.LOCATION_SERVICE);
-        fusedLocationProviderClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                currentloc = location;
-            }
-        });
+        locationClass = new LocationClass(getContext());
 
         if (c.getwork() != null) {
             if (c.getwork().equals("login")) {
@@ -107,7 +98,7 @@ public class Home extends Fragment {
                     name.setText(m.getEname());
                     uid.setText(m.getEusname());
                     stst.setText(m.getEsts());
-
+                    c.addName(m.getEname());
                     if (m.getEsts().equals("login")) {
                         login.setVisibility(View.GONE);
                         logout.setVisibility(View.VISIBLE);
@@ -115,10 +106,8 @@ public class Home extends Fragment {
                         login.setVisibility(View.VISIBLE);
                         logout.setVisibility(View.GONE);
                     }
-
                 }
             }
-
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
 
@@ -141,8 +130,8 @@ public class Home extends Fragment {
                     checkLocationPermission();
                 }else {
                     AppUtill.EMPURL.child(c.getuid()).child("ests").setValue("login");
-                    AppUtill.EMPURL.child(c.getuid()).child("lat").setValue(String.valueOf(currentloc.getLatitude()));
-                    AppUtill.EMPURL.child(c.getuid()).child("lang").setValue(String.valueOf(currentloc.getLongitude()));
+                    AppUtill.EMPURL.child(c.getuid()).child("lat").setValue(String.valueOf(locationClass.getLat()));
+                    AppUtill.EMPURL.child(c.getuid()).child("lang").setValue(String.valueOf(locationClass.getlong()));
                     c.addwork();
                 }
             }
@@ -155,8 +144,8 @@ public class Home extends Fragment {
                     checkLocationPermission();
                 }else {
                     AppUtill.EMPURL.child(c.getuid()).child("ests").setValue("logout");
-                    AppUtill.EMPURL.child(c.getuid()).child("lat").setValue(String.valueOf(currentloc.getLatitude()));
-                    AppUtill.EMPURL.child(c.getuid()).child("lang").setValue(String.valueOf(currentloc.getLongitude()));
+                    AppUtill.EMPURL.child(c.getuid()).child("lat").setValue(String.valueOf(locationClass.getLat()));
+                    AppUtill.EMPURL.child(c.getuid()).child("lang").setValue(String.valueOf(locationClass.getlong()));
                     c.logoutwork();
                 }
             }
@@ -168,7 +157,7 @@ public class Home extends Fragment {
         amountlistpending.clear();
         amountlistearn.clear();
         todayamountlistearn.clear();
-        Query q = AppUtill.ORDERURl.orderByChild("did").equalTo(new Control(getContext()).getuid());
+        Query q = AppUtill.BILLINGURl.orderByChild("did").equalTo(new Control(getContext()).getuid());
         q.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -176,16 +165,17 @@ public class Home extends Fragment {
                     int i = 0;
                     totalcount.setText(String.valueOf(dataSnapshot.getChildrenCount()));
                     for (DataSnapshot data : dataSnapshot.getChildren()) {
-                        if (data.child("ddate").getValue() != null) {
-                            if (data.child("ddate").getValue().toString().equals(new TimeDate(getContext()).getdate())) {
+                        BillingParameters b = data.getValue(BillingParameters.class);
+                        if (b.getDate() != null) {
+                            if (b.getDate().equals(new TimeDate(getContext()).getdate())) {
                                 i += 1;
-                                todayamountlistearn.add(data.child("bam").getValue().toString());
+                                todayamountlistearn.add(b.getTotal_amount());
                             }
                         }
-                        if (data.child("sts").getValue().toString().equals("pending")) {
-                            amountlistpending.add(data.child("bam").getValue().toString());
-                        } else if (data.child("sts").getValue().toString().equals("complete")) {
-                            amountlistearn.add(data.child("bam").getValue().toString());
+                        if (b.getSts().equals("pending")) {
+                            amountlistpending.add(b.getTotal_amount());
+                        } else if (b.getSts().equals("complete")) {
+                            amountlistearn.add(b.getTotal_amount());
                         }
                     }
                     todaycount.setText(String.valueOf(i));
@@ -194,7 +184,6 @@ public class Home extends Fragment {
                     totalcount.setText("0");
                 }
             }
-
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
 

@@ -69,7 +69,7 @@ public class Myorder extends Fragment {
         ) {
             @Override
             protected void populateViewHolder(MyOrderHold order_hold, OrderParametrs op, int i) {
-                order_hold.setdetails(getContext() ,op.getUid() ,op.getId() , op.getBam() , op.getAddres() , op.getSts());
+                order_hold.setdetails(getContext() ,op.getUid() ,op.getId() , op.getAddres() , op.getSts());
             }
         };
         pd.dismiss();

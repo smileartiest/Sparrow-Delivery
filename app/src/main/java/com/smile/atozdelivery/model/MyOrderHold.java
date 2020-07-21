@@ -27,7 +27,7 @@ public class MyOrderHold extends RecyclerView.ViewHolder {
         super(itemView);
     }
 
-    public void setdetails(final Context c1 , String uid1 ,final String id1 , String am1 , String addid1 , String sts1 ){
+    public void setdetails(final Context c1 , String uid1 ,final String id1 , String addid1 , String sts1 ){
 
         TextView oid = itemView.findViewById(R.id.rorder_oid);
         TextView amount = itemView.findViewById(R.id.rorder_amount);
@@ -36,12 +36,11 @@ public class MyOrderHold extends RecyclerView.ViewHolder {
         TextView conform = itemView.findViewById(R.id.rorder_conformorder);
         TextView viewmore = itemView.findViewById(R.id.rorder_viewmore);
         ImageView img = itemView.findViewById(R.id.rorder_img);
-        ConstraintLayout bgscreen = itemView.findViewById(R.id.rorder_stsbg);
 
         img.setImageResource(R.drawable.order_icon_green);
 
         oid.setText(id1);
-        amount.setText(am1);
+        //amount.setText(am1);
 
         DatabaseReference df = FirebaseDatabase.getInstance().getReference("address").child(uid1).child(addid1);
         df.addValueEventListener(new ValueEventListener() {
@@ -66,11 +65,8 @@ public class MyOrderHold extends RecyclerView.ViewHolder {
         conform.setText("CANCEL");
 
         if(sts1.equals("complete")){
-            bgscreen.setBackgroundResource(R.color.green);
             img.setImageResource(R.drawable.complete_icon);
             conform.setVisibility(View.INVISIBLE);
-        }else if(sts1.equals("pending")) {
-            bgscreen.setBackgroundResource(R.color.yellow);
         }
 
         conform.setOnClickListener(new View.OnClickListener() {

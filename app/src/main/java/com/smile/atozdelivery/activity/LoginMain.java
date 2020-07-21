@@ -11,6 +11,8 @@ import androidx.fragment.app.FragmentTransaction;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -24,6 +26,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.crowdfire.cfalertdialog.CFAlertDialog;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -153,28 +156,29 @@ public class LoginMain extends AppCompatActivity {
             case R.id.log_menu_refres:
                 return true;
             case R.id.log_menu_logout:
-
-                final Dialog d = new Dialog(LoginMain.this);
-                d.setContentView(R.layout.calertdialog);
-                d.getWindow().setLayout(ConstraintLayout.LayoutParams.MATCH_PARENT ,ConstraintLayout.LayoutParams.WRAP_CONTENT );
-                Button yes = d.findViewById(R.id.calert_yes);
-                Button no = d.findViewById(R.id.calert_no);
-                yes.setOnClickListener(new View.OnClickListener() {
+                CFAlertDialog.Builder builder = new CFAlertDialog.Builder(this);
+                builder.setDialogStyle(CFAlertDialog.CFAlertStyle.ALERT);
+                builder.setIcon(R.drawable.sparrowiconsmall);
+                builder.setCornerRadius(20);
+                builder.setTitle("Hey , There !");
+                builder.setMessage("Are You sure, want to close this app ?");
+                builder.addButton("EXIT", -1, -1, CFAlertDialog.CFAlertActionStyle.POSITIVE, CFAlertDialog.CFAlertActionAlignment.JUSTIFIED, new DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick(View v) {
-                        d.dismiss();
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
                         new Control(LoginMain.this).clearmemory();
                         new Move_Show(LoginMain.this , Login.class);
+                        startActivity(new Intent(getApplicationContext(), Login.class));
                         finish();
                     }
                 });
-                no.setOnClickListener(new View.OnClickListener() {
+                builder.addButton("NOT NOW", -1, -1, CFAlertDialog.CFAlertActionStyle.DEFAULT, CFAlertDialog.CFAlertActionAlignment.JUSTIFIED, new DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick(View v) {
-                        d.dismiss();
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
                     }
                 });
-                d.show();
+                builder.show();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -202,8 +206,25 @@ public class LoginMain extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
-        finish();
-        Snackbar.make(screen , "Press again",Snackbar.LENGTH_SHORT).show();
+        CFAlertDialog.Builder builder = new CFAlertDialog.Builder(this);
+        builder.setDialogStyle(CFAlertDialog.CFAlertStyle.ALERT);
+        builder.setIcon(R.drawable.sparrowiconsmall);
+        builder.setCornerRadius(20);
+        builder.setTitle("Hey , There !");
+        builder.setMessage("Are You sure, want to close this app ?");
+        builder.addButton("EXIT", -1, -1, CFAlertDialog.CFAlertActionStyle.POSITIVE, CFAlertDialog.CFAlertActionAlignment.JUSTIFIED, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                finishAffinity();
+            }
+        });
+        builder.addButton("NOT NOW", -1, -1, CFAlertDialog.CFAlertActionStyle.DEFAULT, CFAlertDialog.CFAlertActionAlignment.JUSTIFIED, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        builder.show();
     }
 }

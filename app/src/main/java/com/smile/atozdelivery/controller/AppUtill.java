@@ -10,5 +10,7 @@ public class AppUtill {
     public static DatabaseReference EMPURL = FirebaseDatabase.getInstance().getReference("employe");
     public static DatabaseReference ADDRESURL = FirebaseDatabase.getInstance().getReference("address");
     public static DatabaseReference REGURL = FirebaseDatabase.getInstance().getReference("usregister");
+    public static DatabaseReference DELIVERYURl = FirebaseDatabase.getInstance().getReference("delivery");
+    public static DatabaseReference BILLINGURl = FirebaseDatabase.getInstance().getReference("billing");
 
 }

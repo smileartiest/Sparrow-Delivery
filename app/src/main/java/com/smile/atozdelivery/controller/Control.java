@@ -24,6 +24,14 @@ public class Control {
         return sharedPreferences.getString("uid","none");
     }
 
+    public void addName(String name){
+        editor.putString("name",name).apply();
+    }
+
+    public String getname(){
+        return sharedPreferences.getString("name",null);
+    }
+
     public void addcno(String cno){
         editor.putString("cno",cno).apply();
     }
